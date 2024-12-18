@@ -16,7 +16,7 @@ import androidx.navigation.NavController
 import com.example.intercambioderegalos.Navigation.AppScreens
 import com.example.intercambioderegalos.models.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import android.content.Context
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController, viewModel: MainViewModel = viewModel()) {
@@ -103,7 +103,7 @@ fun LoginScreen(navController: NavController, viewModel: MainViewModel = viewMod
     // Usar LaunchedEffect solo cuando se hace clic en "Iniciar sesión"
     if (isLoginClicked.value) {
         LaunchedEffect(Unit) {
-            val success = viewModel.loginUser(email.value, password.value)
+            val success = viewModel.loginUser(email.value, password.value,context)
             if (success) {
                 // Navegar al HomeScreen si es exitoso
                 navController.navigate(AppScreens.HomeScreen.route) {
