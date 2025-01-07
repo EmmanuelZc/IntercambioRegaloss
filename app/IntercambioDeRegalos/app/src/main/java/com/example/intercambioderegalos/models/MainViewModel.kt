@@ -1,111 +1,144 @@
 package com.example.intercambioderegalos.models
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intercambioderegalos.api.RetrofitClient
 import com.example.intercambioderegalos.ResponseData
 import com.example.intercambioderegalos.api.ApiService
+import com.example.intercambioderegalos.utils.SessionManager
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.Response
 import android.content.Context
-
+import android.util.Log
 
 class MainViewModel : ViewModel() {
-    val messageState = mutableStateOf("")
-    val registerStatus = MutableLiveData<Int>()
-    val errorMessage = MutableLiveData<String>()
+
+    val messageState = MutableLiveData<String>()
     private val apiService = RetrofitClient.apiService
 
     // Función para registrar al usuario
-    fun registerUser(user: User) {
+    fun registerUser(user: User, context: Context, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val call = apiService.registerUser(user)
-            call.enqueue(object : Callback<Void> { // Cambié Void por ResponseData
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    if (response.isSuccessful) {
-                        registerStatus.postValue(response.code())  // Código HTTP 201 para éxito
-                        messageState.value = "Usuario registrado con éxito"
-                    } else {
-                        errorMessage.postValue("Error al registrar usuario. Código: ${response.code()}")
-                        messageState.value = "Error al registrar usuario"
-                    }
+            try {
+                val response = apiService.registerUser(user)
+                if (response.isSuccessful) {
+                    messageState.value = "Usuario registrado con éxito"
+                    onSuccess()
+                } else {
+                    val error = "Error al registrar usuario: ${response.code()}"
+                    messageState.value = error
+                    onError(error)
                 }
-
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    errorMessage.postValue(t.message)
-                    messageState.value = "Error: ${t.message}"
-                }
-            })
+            } catch (e: Exception) {
+                val error = "Error de conexión: ${e.message}"
+                messageState.value = error
+                onError(error)
+            }
         }
     }
 
+    // Función para el login
     suspend fun loginUser(correo: String, password: String, context: Context): Boolean {
         val loginRequest = ApiService.LoginRequest(correo, password)
-        try {
-            val response = apiService.loginUser(loginRequest)
+        return try {
+            val response: Response<LoginResponse> = apiService.loginUser(loginRequest)
             if (response.isSuccessful) {
                 val loginResponse = response.body()
                 if (loginResponse != null) {
-
-                    val token = loginResponse.token
-                    saveToken(context, token)
-
-                    // Guarda también el mensaje de éxito para mostrarlo al usuario
+                    val sessionManager = SessionManager(context)
+                    sessionManager.saveToken(loginResponse.token)
                     messageState.value = loginResponse.message
-                    return true // Usuario autenticado con éxito
+                    true
+                } else {
+                    messageState.value = "Respuesta de inicio de sesión vacía"
+                    false
                 }
             } else {
                 messageState.value = "Error de autenticación: ${response.message()}"
+                false
             }
         } catch (e: Exception) {
             messageState.value = "Error de conexión: ${e.message}"
-        }
-        return false
-    }
-
-
-    private fun saveToken(context: Context, token: String) {
-        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        with(sharedPreferences.edit()) {
-            putString("jwt_token", token)  // Guardamos el token bajo la clave "jwt_token"
-            apply()  // Aplica los cambios
+            false
         }
     }
 
-    // Función para obtener el token desde SharedPreferences
-    fun getToken(context: Context): String? {
-        val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        return sharedPreferences.getString("jwt_token", null)  // Devuelve null si no se encuentra el token
-    }
-
-
-    // Método fetchData ahora completo
-    fun fetchData(context: Context) {
+    // Función para crear un nuevo intercambio con ID
+    fun crearIntercambioConId(
+        intercambio: Intercambio,
+        context: Context,
+        onSuccess: (Int) -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
-                // Obtener el token desde SharedPreferences
-                val token = getToken(context)
-
+                val token = SessionManager(context).getToken()
                 if (token != null) {
-                    // Llamar a la API pasando el token en el encabezado
-                    val response: Response<ResponseData> = apiService.getData("Bearer $token")
-
+                    val response = apiService.nuevoIntercambio(
+                        token = "Bearer $token",
+                        intercambio = intercambio
+                    )
                     if (response.isSuccessful) {
-                        messageState.value = response.body()?.message ?: "Sin mensaje"
+                        val intercambioCreado = response.body()
+                        if (intercambioCreado != null) {
+                            onSuccess(intercambioCreado.id ?: -1) // Usa -1 como valor por defecto si el id es null
+                        } else {
+                            onError("No se pudo obtener el ID del intercambio")
+                        }
                     } else {
-                        messageState.value = "Error en la solicitud"
+                        onError("Error en la respuesta: ${response.code()} ${response.message()}")
                     }
                 } else {
-                    messageState.value = "Token no encontrado"
+                    onError("No se encontró un token válido. Por favor, inicia sesión nuevamente.")
                 }
             } catch (e: Exception) {
-                messageState.value = "Error: ${e.message}"
+                onError("Error al enviar la solicitud: ${e.message}")
             }
         }
     }
-
+    fun fetchData(context: Context) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager(context).getToken()
+                if (token != null) {
+                    val response: Response<ResponseData> = apiService.getData("Bearer $token")
+                    if (response.isSuccessful) {
+                        messageState.value = response.body()?.message ?: "Sin datos disponibles"
+                    } else {
+                        messageState.value = "Error al obtener datos: ${response.code()} ${response.message()}"
+                    }
+                } else {
+                    messageState.value = "Token no encontrado, por favor inicia sesión nuevamente"
+                }
+            } catch (e: Exception) {
+                messageState.value = "Error de conexión: ${e.message}"
+            }
+        }
+    }
+    // Función para agregar un tema
+    fun nuevoTema(
+        tema: Temas,
+        context: Context,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager(context).getToken()
+                if (token != null) {
+                    val response = apiService.nuevoTema("Bearer $token", tema)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onError("Error al agregar el tema: ${response.code()} ${response.message()}")
+                    }
+                } else {
+                    onError("No se encontró un token válido. Por favor, inicia sesión nuevamente.")
+                }
+            } catch (e: Exception) {
+                onError("Error de conexión: ${e.message}")
+            }
+        }
+    }
 }

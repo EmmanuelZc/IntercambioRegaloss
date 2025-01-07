@@ -1,6 +1,5 @@
 import  Sequelize  from 'sequelize';
 
-// Crear una instancia de Sequelize con la configuración de la base de datos
 const sequelize = new Sequelize('intercambiosdb', 'root', 'root', {
     host: 'localhost',
     dialect: 'mysql',
@@ -10,7 +9,7 @@ const sequelize = new Sequelize('intercambiosdb', 'root', 'root', {
         acquire: 30000, // Tiempo máximo en milisegundos que Sequelize esperará por una conexión
         idle: 10000,    // Tiempo máximo en milisegundos que una conexión puede estar inactiva antes de ser liberada
     },
-    logging: false, // Desactiva el logging de consultas SQL
+    logging: false, 
 });
 
 export default sequelize;

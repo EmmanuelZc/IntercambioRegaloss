@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,7 +44,9 @@ fun isValidPassword(password: String): Boolean {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: NavController){
+fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: NavController) {
+    val context = LocalContext.current // Obtén el contexto actual
+
     val nombre = remember { mutableStateOf("") }
     val alias = remember { mutableStateOf("") }
     val correo = remember { mutableStateOf("") }
@@ -52,24 +55,26 @@ fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: N
     val aliasError = remember { mutableStateOf(false) }
     val emailError = remember { mutableStateOf(false) }
     val passwordError = remember { mutableStateOf(false) }
-    Column (
+
+    Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
+    ) {
         Text(text = "Ingresa tus datos")
         OutlinedTextField(
             value = nombre.value,
-            onValueChange ={
+            onValueChange = {
                 nombre.value = it
-                nombreError.value = it.isEmpty() },
+                nombreError.value = it.isEmpty()
+            },
             label = { Text(text = "Nombre") },
             isError = nombreError.value,
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = if (nombreError.value) Color.Red else Color.Blue,
                 unfocusedBorderColor = if (nombreError.value) Color.Red else Color.Black
-                )
             )
+        )
         if (nombreError.value) {
             Text(text = "El nombre no puede estar vacío", color = Color.Red)
         }
@@ -78,8 +83,10 @@ fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: N
 
         OutlinedTextField(
             value = alias.value,
-            onValueChange ={ alias.value = it
-                aliasError.value = it.isEmpty()},
+            onValueChange = {
+                alias.value = it
+                aliasError.value = it.isEmpty()
+            },
             label = { Text(text = "Alias") },
             isError = aliasError.value,
             colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -96,8 +103,10 @@ fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: N
 
         OutlinedTextField(
             value = correo.value,
-            onValueChange ={ correo.value = it
-                emailError.value = !isValidEmail(correo.value.trim())},
+            onValueChange = {
+                correo.value = it
+                emailError.value = !isValidEmail(correo.value.trim())
+            },
             label = { Text(text = "email") },
             isError = emailError.value,
             colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -114,8 +123,10 @@ fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: N
 
         OutlinedTextField(
             value = contraseña.value,
-            onValueChange ={ contraseña.value = it
-                passwordError.value = !isValidPassword(it)},
+            onValueChange = {
+                contraseña.value = it
+                passwordError.value = !isValidPassword(it)
+            },
             label = { Text(text = "password") },
             isError = passwordError.value,
             colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -141,17 +152,22 @@ fun RegisterBodyContent(viewModel: MainViewModel = viewModel(), navController: N
                     correo = correo.value,
                     contraseña = contraseña.value
                 )
-                viewModel.registerUser(user)
+                // Llama a la función del ViewModel y pasa el contexto
+                viewModel.registerUser(user, context, onSuccess = {
+                    println("Usuario registrado con éxito")
+                    navController.navigate("Login_screen")
+                }, onError = { error ->
+                    println("Error al registrar usuario: $error")
+                })
             }
         }) {
             Text(text = "Registrate")
         }
-        Text(text = viewModel.messageState.value)
-        if(viewModel.messageState.value == "Usuario registrado con éxito"){
-            navController.navigate("Login_screen")
-        }
+        Text(text = viewModel.messageState.value ?: "")
+
     }
 }
+
 
 
 @Composable
