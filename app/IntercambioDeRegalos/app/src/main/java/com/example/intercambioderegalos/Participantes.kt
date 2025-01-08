@@ -1,5 +1,6 @@
 package com.example.intercambioderegalos
 
+import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.provider.ContactsContract
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -182,116 +184,115 @@ fun AddParticipantScreen(
         }
     }
 }
+
 @Composable
-fun ImportContactsScreen(
-    navController: NavController,
-    intercambioId: Int,
-    viewModel: MainViewModel = viewModel()
-) {
+fun ImportContactsScreen(navController: NavController, intercambioId: Int, viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val contactState = remember { mutableStateOf<Pair<String, String>?>(null) }
+    var hasPermission by remember { mutableStateOf(false) }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri ->
-        uri?.let {
-            val contact = getContactDetails(context, it)
-            contactState.value = contact
+    // Verificar el permiso al iniciar
+    LaunchedEffect(Unit) {
+        hasPermission = context.checkSelfPermission(Manifest.permission.READ_CONTACTS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasPermission = isGranted
+        if (!isGranted) {
+            println("Permiso denegado para leer contactos")
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (contactState.value != null) {
-                val (name, phone) = contactState.value!!
+    val pickContactLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickContact()
+    ) { uri ->
+        uri?.let {
+            contactState.value = getContactDetails(context, it)
+        }
+    }
 
-                Text(
-                    text = "Nombre: $name\nTeléfono: $phone",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Button(
-                    onClick = {
-                        try {
-                            viewModel.addParticipante(
-                                context = context,
-                                intercambioId = intercambioId,
-                                participante = Participante(
-                                    id = null,
-                                    nombre = name,
-                                    telefono = phone,
-                                    email = null,
-                                    confirmado = 0,
-                                    id_intercambio = intercambioId
-                                ),
-                                onSuccess = {
-                                    navController.popBackStack() // Regresar a la pantalla anterior
-                                },
-                                onError = { error ->
-                                    // Mostrar error al usuario
-                                    error?.let {
-                                        println("Error al agregar participante: $error")
-                                    }
-                                }
-                            )
-                        } catch (e: Exception) {
-                            println("Error al procesar el contacto: ${e.message}")
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                ) {
-                    Text("Agregar Participante", color = Color.White)
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (hasPermission) {
+                if (contactState.value != null) {
+                    val (name, phone) = contactState.value!!
+                    Text(text = "Nombre: $name\nTeléfono: $phone")
+                    Button(onClick = {
+                        viewModel.addParticipante(
+                            context = context,
+                            intercambioId = intercambioId,
+                            participante = Participante(
+                                id = null,
+                                nombre = name,
+                                telefono = phone,
+                                email = null,
+                                confirmado = 0,
+                                id_intercambio = intercambioId
+                            ),
+                            onSuccess = { navController.popBackStack() },
+                            onError = { println("Error al agregar participante") }
+                        )
+                    }) {
+                        Text("Agregar Participante")
+                    }
+                } else {
+                    Button(onClick = { pickContactLauncher.launch(null) }) {
+                        Text("Seleccionar Contacto")
+                    }
                 }
             } else {
-                Button(
-                    onClick = { launcher.launch(null) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                ) {
-                    Text("Seleccionar Contacto", color = Color.White)
+                Text("Se requiere permiso para leer contactos")
+                Button(onClick = { requestPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) }) {
+                    Text("Solicitar Permiso")
                 }
             }
         }
     }
 }
+
 fun getContactDetails(context: Context, uri: Uri): Pair<String, String>? {
     val projection = arrayOf(
         ContactsContract.Contacts._ID,
         ContactsContract.Contacts.DISPLAY_NAME
     )
 
-    val cursor = context.contentResolver.query(uri, projection, null, null, null)
+    try {
+        val cursor = context.contentResolver.query(uri, projection, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val idIndex = it.getColumnIndexOrThrow(ContactsContract.Contacts._ID)
+                val nameIndex = it.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME)
 
-    cursor?.use {
-        if (it.moveToFirst()) {
-            val idIndex = it.getColumnIndex(ContactsContract.Contacts._ID)
-            val nameIndex = it.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                val contactId = it.getString(idIndex)
+                val name = it.getString(nameIndex) ?: "Sin Nombre"
 
-            val contactId = it.getString(idIndex)
-            val name = it.getString(nameIndex) ?: "Sin Nombre"
+                // Ahora busca el número de teléfono en otra consulta
+                val phoneCursor = context.contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                    arrayOf(contactId),
+                    null
+                )
 
-            // Ahora busca el número de teléfono en otra consulta
-            val phoneCursor = context.contentResolver.query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
-                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
-                arrayOf(contactId),
-                null
-            )
-
-            phoneCursor?.use { pc ->
-                if (pc.moveToFirst()) {
-                    val phoneIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                    val phone = pc.getString(phoneIndex) ?: "Sin Teléfono"
-                    return Pair(name, phone)
+                phoneCursor?.use { pc ->
+                    if (pc.moveToFirst()) {
+                        val phoneIndex = pc.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val phone = pc.getString(phoneIndex) ?: "Sin Teléfono"
+                        return Pair(name, phone)
+                    }
                 }
             }
         }
+    } catch (e: Exception) {
+        println("Error al obtener detalles del contacto: ${e.message}")
     }
 
     return null // Si no se encuentran datos, devuelve null
-
 }
+
