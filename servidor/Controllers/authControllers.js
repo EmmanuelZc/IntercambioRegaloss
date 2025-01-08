@@ -7,8 +7,7 @@ import Temas from '../models/tema.js';
 
 import { v4 as uuidv4 } from 'uuid'; // Generar claves únicas (UUID)
 
-// Registro de usuario
-// Registro de usuario
+
 const registerUser = async (req, res) => {
     const { nombre, alias, correo, contraseña } = req.body;
 
@@ -17,7 +16,7 @@ const registerUser = async (req, res) => {
     }
 
     try {
-        // Verificar si el correo ya está registrado
+        
         const existingUser = await User.findOne({ where: { correo } }); // Corregido
         if (existingUser) {
             return res.status(400).json({ message: 'El correo ya está registrado' });
