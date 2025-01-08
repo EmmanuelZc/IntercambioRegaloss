@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import db from '../config/database.js';
-
+import Temas from './tema.js';
 const Intercambio = db.define('intercambio', {
     id: {
         type: DataTypes.INTEGER,
@@ -48,5 +48,6 @@ const Intercambio = db.define('intercambio', {
     timestamps: false,
     tableName: 'intercambio'
 });
+
 
 export default Intercambio;

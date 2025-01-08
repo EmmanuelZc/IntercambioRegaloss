@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
-import Intercambio from './Intercambio.js';
-const Participante = sequelize.define('Participante', {
+import db from '../config/database.js';
+const Participante = db.define('participantes', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -10,16 +9,12 @@ const Participante = sequelize.define('Participante', {
     id_intercambio: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'Intercambio', // Nombre de la tabla `Intercambio`
-            key: 'id',
-        },
     },
     nombre: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    correo: {
+    email: {
         type: DataTypes.STRING,
         allowNull: false,
     },
@@ -27,18 +22,18 @@ const Participante = sequelize.define('Participante', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    temaPreferido: {
-        type: DataTypes.STRING,
+    confirmado: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    asignado_a: {
+        type: DataTypes.INTEGER,
         allowNull: true,
     },
 }, {
-    tableName: 'participantes',
     timestamps: false,
+    tableName: 'participantes',
 });
 
-
-Participante.belongsTo(Intercambio, {
-    foreignKey: 'id_intercambio',
-    as: 'intercambio',
-});
 export default Participante;

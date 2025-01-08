@@ -238,10 +238,8 @@ const getClave = async(req, res) => {
 
     })
 }
-
-
 const getIntercambioById = async (req, res) => {
-    const { id } = req.params; // Obtener el ID de los parámetros de la ruta
+    const { id } = req.params;
 
     if (!id) {
         return res.status(400).json({ message: 'Falta el ID del intercambio' });
@@ -251,9 +249,17 @@ const getIntercambioById = async (req, res) => {
         const intercambio = await Intercambio.findOne({
             where: { id },
             include: [
-                { model: Temas, as: 'temas', attributes: ['id', 'tema'] },
-                { model: Participante, as: 'participantes', attributes: ['id', 'nombre', 'correo'] }
-            ]
+                {
+                    model: Temas,
+                    as: 'temasIntercambio', // Alias correcto
+                    attributes: ['id', 'tema'],
+                },
+                {
+                    model: Participante,
+                    as: 'participantesIntercambio', // Alias correcto
+                    attributes: ['id', 'id_intercambio', 'nombre', 'email', 'telefono', 'confirmado', 'asignado_a'],
+                },
+            ],
         });
 
         if (!intercambio) {
@@ -266,5 +272,8 @@ const getIntercambioById = async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
+
+
+
 
 export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios,getIntercambioById};
