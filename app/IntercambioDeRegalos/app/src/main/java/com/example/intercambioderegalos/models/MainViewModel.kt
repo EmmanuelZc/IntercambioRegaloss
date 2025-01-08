@@ -81,10 +81,13 @@ class MainViewModel : ViewModel() {
                     )
                     if (response.isSuccessful) {
                         val intercambioCreado = response.body()
-                        if (intercambioCreado != null) {
-                            onSuccess(intercambioCreado.id ?: -1) // Usa -1 como valor por defecto si el id es null
+                        val id = intercambioCreado?.id ?: -1 // Usa el campo correcto de la respuesta
+                        if (id > 0) {
+                            onSuccess(id)
+                            Log.d("API Response", "Intercambio creado: $intercambioCreado")
+
                         } else {
-                            onError("No se pudo obtener el ID del intercambio")
+                            onError("ID no válido en la respuesta del servidor")
                         }
                     } else {
                         onError("Error en la respuesta: ${response.code()} ${response.message()}")
@@ -97,6 +100,8 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+
     fun fetchData(context: Context) {
         viewModelScope.launch {
             try {
@@ -141,4 +146,101 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+    fun fetchIntercambios(
+        context: Context,
+        onSuccess: (List<Intercambio>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager(context).getToken()
+                if (token != null) {
+                    val response = apiService.getIntercambios("Bearer $token")
+                    if (response.isSuccessful) {
+                        val intercambios = response.body() ?: emptyList()
+                        onSuccess(intercambios)
+                    } else {
+                        onError("Error: ${response.code()} ${response.message()}")
+                    }
+                } else {
+                    onError("Token no encontrado, por favor inicia sesión nuevamente.")
+                }
+            } catch (e: Exception) {
+                onError("Error de conexión: ${e.message}")
+            }
+        }
+    }
+
+
+    fun fetchIntercambioDetails(
+        context: Context,
+        intercambioId: Int,
+        onSuccess: (DetailsResponse) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager(context).getToken()
+                if (token != null) {
+                    val response = apiService.getIntercambioDetails("Bearer $token", intercambioId)
+                    if (response.isSuccessful) {
+                        response.body()?.let { details ->
+                            // Mapea la respuesta para asegurarte de que los participantes son objetos Participante
+                            val participantes = details.participantes.map { participanteData ->
+                                Participante(
+                                    nombre = participanteData.nombre,
+                                    correo = participanteData.correo,
+                                    telefono = participanteData.telefono,
+                                    temaPreferido = participanteData.temaPreferido
+                                )
+                            }
+                            val fixedDetails = DetailsResponse(
+                                intercambio = details.intercambio,
+                                temas = details.temas,
+                                participantes = participantes
+                            )
+                            onSuccess(fixedDetails)
+                        }
+                    } else {
+                        onError("Error: ${response.message()}")
+                    }
+                } else {
+                    onError("Token no encontrado")
+                }
+            } catch (e: Exception) {
+                onError("Error de conexión: ${e.message}")
+            }
+        }
+    }
+
+
+
+    fun agregarParticipante(
+        context: Context,
+        intercambioId: Int,
+        participante: Participante, // Cambiado a Participante en lugar de String
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager(context).getToken()
+                if (token != null) {
+                    val response = apiService.addParticipante("Bearer $token", intercambioId, participante)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onError("Error: ${response.message()}")
+                    }
+                } else {
+                    onError("Token no encontrado")
+                }
+            } catch (e: Exception) {
+                onError("Error de conexión: ${e.message}")
+            }
+        }
+    }
+
+
+
 }

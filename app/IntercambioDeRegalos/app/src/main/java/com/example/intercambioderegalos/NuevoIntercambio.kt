@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.material3.AlertDialog
+import com.example.intercambioderegalos.Navigation.AppScreens
 
 import com.example.intercambioderegalos.models.Intercambio
 import com.example.intercambioderegalos.models.MainViewModel
@@ -176,7 +177,7 @@ fun NuevoScreen(navController: NavController, viewModel: MainViewModel = viewMod
                         intercambio,
                         context = context,
                         onSuccess = { id ->
-                            if (id > 0) { // Asegúrate de que el ID es válido
+                            if (id > 0) {
                                 intercambioId = id
                                 showDialog = true
                             } else {
@@ -187,6 +188,8 @@ fun NuevoScreen(navController: NavController, viewModel: MainViewModel = viewMod
                             println("Error al crear el intercambio: $error")
                         }
                     )
+
+
                 } else {
                     println("Por favor completa todos los campos requeridos")
                 }
@@ -207,7 +210,7 @@ fun NuevoScreen(navController: NavController, viewModel: MainViewModel = viewMod
                     Button(onClick = {
                         showDialog = false
                         if (intercambioId > 0) { // Verifica que el ID es válido
-                            navController.navigate("AgregarTemasScreen/$intercambioId")
+                            navController.navigate(AppScreens.AgregarTemas.createRoute(intercambioId))
                         } else {
                             println("Error: No se puede navegar con un ID de intercambio inválido.")
                         }
@@ -221,11 +224,10 @@ fun NuevoScreen(navController: NavController, viewModel: MainViewModel = viewMod
     }
 }
 
-// Generador de claves únicas
 fun generarClaveUnica(): String {
-    val caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    return (1..5).map { caracteres.random() }.joinToString("")
+    return java.util.UUID.randomUUID().toString().substring(0, 8)
 }
+
 
 @Composable
 fun AgregarTemasScreen(navController: NavController, intercambioId: Int, viewModel: MainViewModel = viewModel()) {

@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Intercambio from '../models/Intercambio.js'; // Modelo de Intercambio
 import Participante from '../models/participante.js'; // Modelo de Participante
+import Temas from '../models/tema.js';
+
 import { v4 as uuidv4 } from 'uuid'; // Generar claves únicas (UUID)
 
 // Registro de usuario
@@ -129,7 +131,7 @@ const createIntercambio = async (req, res) => {
     }
 
     try {
-        const claveUnica = uuidv4();
+        const claveUnica = uuidv4().slice(0, 8);
 
         console.log('Datos para crear el intercambio:', {
             nombre_intercambio: nombre,
@@ -158,22 +160,84 @@ const createIntercambio = async (req, res) => {
 
         console.log('Intercambio creado con éxito:', intercambio); // Log del éxito
         res.status(201).json({
+            id: intercambio.id,
+            nombre: intercambio.nombre_intercambio,
+            claveUnica: intercambio.clave_unica,
             message: 'Intercambio creado con éxito',
-            intercambio: {
-                id: intercambio.id,
-                nombre: intercambio.nombre_intercambio,
-                claveUnica: intercambio.clave_unica,
-            },
         });
+        
     } catch (error) {
         console.error('Error al crear el intercambio:', error); // Log del error
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
 
+const addTema = async (req, res) => {
+    const { id_intercambio, tema } = req.body;
+
+    // Validación de datos
+    if (!id_intercambio || !tema) {
+        return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    }
+
+    try {
+        // Crear tema
+        const nuevoTema = await Temas.create({
+            id_intercambio,
+            tema
+        });
+
+        res.status(201).json({
+            message: 'Tema agregado con éxito',
+            tema: nuevoTema
+        });
+    } catch (error) {
+        console.error('Error al agregar el tema:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+const getIntercambios = async (req, res) => {
+    const userId = req.userId; // ID del usuario autenticado
+
+    if (!userId) {
+        return res.status(401).json({ message: 'Usuario no autenticado' });
+    }
+
+    try {
+        const intercambios = await Intercambio.findAll({
+            attributes: [
+                'id',
+                ['nombre_intercambio', 'nombre'],
+                ['fecha_limite_registro', 'fechaLimiteRegistro'],
+                ['fecha_intercambio', 'fechaIntercambio'],
+                ['hora_intercambio', 'horaIntercambio'],
+                ['lugar_intercambio', 'lugar'],
+                ['monto', 'montoMaximo'],
+                'comentarios',
+                ['clave_unica', 'claveUnica']
+            ],
+            where: { id_user: userId }
+        });
+
+        res.status(200).json(intercambios);
+    } catch (error) {
+        console.error('Error al obtener los intercambios:', error);
+        res.status(500).json({ message: 'Error al obtener los intercambios' });
+    }
+};
 
 
+const getClave = async(req, res) => {
+    const intercambioid = req.intercambioid
 
+    if (!intercambioid) {
+        return res.status(401).json({ message: 'Intercambio no encontrado' });
+    }
 
+    const clave = await intercambio.findAll({
 
-export default { registerUser, loginUser, createIntercambio,authenticate };
+    })
+}
+
+export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios};

@@ -7,31 +7,51 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.intercambioderegalos.Navigation.AppScreens
+import com.example.intercambioderegalos.models.Intercambio
 import com.example.intercambioderegalos.models.MainViewModel
-
 @Composable
 fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewModel()) {
-    val recentExchanges = listOf("Amigos de la oficina", "Familia Navidad", "Clase de Yoga") // Datos simulados
+    val context = LocalContext.current
+    val isLoading = remember { mutableStateOf(true) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+    val exchanges = remember { mutableStateOf<List<Intercambio>>(emptyList()) }
+
+    // Fetch data on first load
+    LaunchedEffect(Unit) {
+        viewModel.fetchIntercambios(
+            context = context,
+            onSuccess = { fetchedExchanges ->
+                exchanges.value = fetchedExchanges
+                isLoading.value = false
+            },
+            onError = { error ->
+                errorMessage.value = error
+                isLoading.value = false
+            }
+        )
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Encabezado
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -40,10 +60,10 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                     .padding(bottom = 16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.snoppy),
-                    contentDescription = "Bienvenida",
+                    painter = painterResource(id = R.drawable.snoppy), // Reemplázalo si no existe
+                    contentDescription = "Welcome Icon",
                     tint = Color(0xFF6200EE),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -53,7 +73,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                 )
             }
 
-            // Botones Principales
+            // Main Buttons
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -62,75 +82,79 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                HomeButton(
-                    text = "Crear Intercambio",
-                    icon = R.drawable.ic_create,
-                    onClick = {
-                        navController.navigate(AppScreens.NuevoScreen.route)
-                    }
-                )
-                HomeButton(
-                    text = "Gestionar Intercambios",
-                    icon = R.drawable.ic_manage,
-                    onClick = { /* Acción */ }
-                )
-                HomeButton(
-                    text = "Unirme a Intercambio",
-                    icon = R.drawable.ic_join,
-                    onClick = { /* Acción */ }
-                )
-                HomeButton(
-                    text = "Ver Mis Intercambios",
-                    icon = R.drawable.ic_list,
-                    onClick = { /* Acción */ }
-                )
+                HomeButton("Crear Intercambio", R.drawable.ic_create) {
+                    navController.navigate(AppScreens.NuevoScreen.route)
+                }
+                HomeButton("Gestionar Intercambios", R.drawable.ic_manage) {
+                    navController.navigate(AppScreens.GestionarIntercambio.route)
+                }
+                HomeButton("Unirme a Intercambio", R.drawable.ic_join) { /* Acción */ }
+              
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Lista de Intercambios Recientes
+            // Recent Exchanges
             Text(
                 text = "Intercambios Recientes",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxHeight(0.4f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
-                    .padding(8.dp)
-            ) {
-                items(recentExchanges) { exchange ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
-                    ) {
-                        Row(
+
+            if (isLoading.value) {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            } else if (errorMessage.value != null) {
+                Text(
+                    text = "Error: ${errorMessage.value}",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else if (exchanges.value.isEmpty()) {
+                Text(
+                    text = "No se encontraron intercambios recientes.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxHeight(0.4f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White)
+                        .padding(8.dp)
+                ) {
+                    items(exchanges.value) { exchange ->
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 6.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_list),
-                                contentDescription = "Intercambio",
-                                tint = Color(0xFF6200EE),
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = exchange,
-                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_list), // Reemplázalo si no existe
+                                    contentDescription = "Intercambio Icon",
+                                    tint = Color(0xFF6200EE),
+                                    modifier = Modifier.size(32.dp)
                                 )
-                                Text(
-                                    text = "Fecha del intercambio: 20/12/2024",
-                                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
-                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = exchange.nombre ?: "Sin Nombre",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
+                                    )
+                                    Text(
+                                        text = "Fecha: ${exchange.fechaIntercambio ?: "Sin Fecha"}",
+                                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                                    )
+                                }
                             }
                         }
                     }
@@ -139,9 +163,9 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Botón Cerrar Sesión
+            // Logout Button
             Button(
-                onClick = { /* Acción de cerrar sesión */ },
+                onClick = { navController.navigate(AppScreens.LoginScreen.route) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)

@@ -6,5 +6,10 @@ sealed class AppScreens(val route: String){
     object RegisterScreen: AppScreens("register_screen")
     object HomeScreen: AppScreens("home_screen")
     object NuevoScreen: AppScreens("nuevo_screen")
-    object AgregarTemas : AppScreens("agregar_temas_screen")
+    object AgregarTemas : AppScreens("agregar_temas_screen") {
+        fun createRoute(id: Int) = "agregar_temas_screen/$id"
+    }
+    object GestionarIntercambio : AppScreens("gestionar_intercambio"){
+        fun createRouteIntercambio(id: Int) = "gestionar_intercambio/$id"
+    }
 }

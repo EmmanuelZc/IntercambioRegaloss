@@ -12,8 +12,9 @@ const Intercambio = sequelize.define('Intercambio', {
         allowNull: false,
     },
     clave_unica: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(8), // Cambia el tamaño máximo a 8
         allowNull: false,
+        unique: true
     },
     id_user: {
         type: DataTypes.INTEGER,

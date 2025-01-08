@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.intercambioderegalos.AgregarTemasScreen
+import com.example.intercambioderegalos.GestionarIntercambioScreen
 import com.example.intercambioderegalos.HomeScreen
 import com.example.intercambioderegalos.LoginScreen
 import com.example.intercambioderegalos.NuevoScreen
@@ -35,13 +36,23 @@ fun AppNavigation(){
         composable(AppScreens.NuevoScreen.route) {
             NuevoScreen(navController)
         }
+
         composable(
-            route = "${AppScreens.AgregarTemas.route}/{intercambioId}",
+            route = "${AppScreens.AgregarTemas.route}/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("id") ?: -1
+            AgregarTemasScreen(navController = navController, intercambioId = id)
+        }
+
+        composable(
+            route = AppScreens.GestionarIntercambio.route + "/{intercambioId}",
             arguments = listOf(navArgument("intercambioId") { type = NavType.IntType })
         ) { backStackEntry ->
             val intercambioId = backStackEntry.arguments?.getInt("intercambioId") ?: 0
-            AgregarTemasScreen(navController = navController, intercambioId = intercambioId)
+            GestionarIntercambioScreen(navController, intercambioId)
         }
 
     }
+
 }
