@@ -1,14 +1,12 @@
 package com.example.intercambioderegalos.models
-
 data class Intercambio(
-    val id: Int? = null, // Opcional
-// Ahora es opcional y tiene un valor por defecto de `null`
-    val nombre: String,
-    val fechaLimiteRegistro: String,
-    val fechaIntercambio: String,
-    val horaIntercambio: String,
-    val lugar: String,
-    val montoMaximo: Double,
+    val id: Int? = null,
+    val nombre_intercambio: String,
+    val fecha_limite_registro: String,
+    val fecha_intercambio: String,
+    val hora_intercambio: String,
+    val lugar_intercambio: String,
+    val monto: Double,
     val comentarios: String?,
-    val claveUnica: String
+    val clave_unica: String
 )

@@ -16,11 +16,11 @@ const Participante = db.define('participantes', {
     },
     email: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     telefono: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
     },
     confirmado: {
         type: DataTypes.INTEGER,

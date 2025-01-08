@@ -53,7 +53,7 @@ interface ApiService {
         @Path("id") intercambioId: Int
     ): Response<DetailsResponse>
 
-    @POST("intercambio/{id}/participantes")
+    @POST("api/auth/intercambio/{id}/participantes")
     suspend fun addParticipante(
         @Header("Authorization") token: String,
         @Path("id") intercambioId: Int,

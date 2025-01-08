@@ -163,14 +163,14 @@ fun NuevoScreen(navController: NavController, viewModel: MainViewModel = viewMod
                     selectedDateExchange.isNotEmpty() && selectedTimeExchange.isNotEmpty()
                 ) {
                     val intercambio = Intercambio(
-                        nombre = title,
-                        fechaLimiteRegistro = selectedDateLimit,
-                        fechaIntercambio = selectedDateExchange,
-                        horaIntercambio = selectedTimeExchange,
-                        lugar = location,
-                        montoMaximo = budget.toDoubleOrNull() ?: 0.0,
+                        nombre_intercambio = title,
+                        fecha_limite_registro = selectedDateLimit,
+                        fecha_intercambio = selectedDateExchange,
+                        hora_intercambio = selectedTimeExchange,
+                        lugar_intercambio =  location,
+                        monto = budget.toDoubleOrNull() ?: 0.0,
                         comentarios = comments,
-                        claveUnica = generarClaveUnica()
+                        clave_unica = generarClaveUnica()
                     )
 
                     viewModel.crearIntercambioConId(

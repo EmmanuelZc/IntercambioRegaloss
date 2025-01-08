@@ -10,5 +10,7 @@ sealed class AppScreens(val route: String){
         fun createRoute(id: Int) = "agregar_temas_screen/$id"
     }
     object GestionarIntercambio : AppScreens("gestionar_intercambio")
+    object AddParticipantScreen : AppScreens("add_participant_screen")
+    object ImportContactsScreen : AppScreens("import_contacts_screen")
 
 }

@@ -6,11 +6,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.intercambioderegalos.AddParticipantScreen
 import com.example.intercambioderegalos.AgregarTemasScreen
 import com.example.intercambioderegalos.GestionarIntercambioScreen
 import com.example.intercambioderegalos.HomeScreen
+import com.example.intercambioderegalos.ImportContactsScreen
 import com.example.intercambioderegalos.LoginScreen
 import com.example.intercambioderegalos.NuevoScreen
+import com.example.intercambioderegalos.ParticipantesScreen
 import com.example.intercambioderegalos.RegisterScreen
 import com.example.intercambioderegalos.SplashScreen
 
@@ -49,6 +52,30 @@ fun AppNavigation(){
             val intercambioId = backStackEntry.arguments?.getString("intercambioId")?.toInt() ?: 0
             GestionarIntercambioScreen(navController, intercambioId)
         }
+
+
+        composable("add_participant_screen/{intercambioId}") { backStackEntry ->
+            val intercambioId = backStackEntry.arguments?.getInt("intercambioId") ?: 0
+            AddParticipantScreen(navController, intercambioId)
+        }
+
+        composable("participantes_screen/{intercambioId}") { backStackEntry ->
+            val intercambioId = backStackEntry.arguments?.getString("intercambioId")?.toInt() ?: 0
+            ParticipantesScreen(navController = navController, intercambioId = intercambioId)
+        }
+
+        composable("add_participant_screen/{intercambioId}") { backStackEntry ->
+            val intercambioId = backStackEntry.arguments?.getString("intercambioId")?.toInt() ?: 0
+            AddParticipantScreen(navController = navController, intercambioId = intercambioId)
+        }
+
+        composable("import_contacts_screen/{intercambioId}") { backStackEntry ->
+            val intercambioId = backStackEntry.arguments?.getString("intercambioId")?.toInt() ?: 0
+            ImportContactsScreen(navController = navController, intercambioId = intercambioId)
+        }
+
+
+
     }
 
 }

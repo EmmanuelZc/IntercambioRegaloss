@@ -15,19 +15,15 @@ const setupAssociations = () => {
     });
 
     // Relación entre Intercambio y Participantes
-    // Relación entre Intercambio y Participantes
-// Relación entre Intercambio y Participantes
-Intercambio.hasMany(Participante, {
-    foreignKey: 'id_intercambio',
-    as: 'participantesIntercambio', // Este alias debe coincidir con el de la consulta
-});
+    Intercambio.hasMany(Participante, {
+        foreignKey: 'id_intercambio',
+        as: 'participantesIntercambio',
+    });
 
-Participante.belongsTo(Intercambio, {
-    foreignKey: 'id_intercambio',
-    as: 'intercambio',
-});
-
-
+    Participante.belongsTo(Intercambio, {
+        foreignKey: 'id_intercambio',
+        as: 'intercambio',
+    });
 };
 
 export default setupAssociations;

@@ -18,7 +18,12 @@ class MainViewModel : ViewModel() {
     private val apiService = RetrofitClient.apiService
 
     // Función para registrar al usuario
-    fun registerUser(user: User, context: Context, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun registerUser(
+        user: User,
+        context: Context,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val response = apiService.registerUser(user)
@@ -81,7 +86,8 @@ class MainViewModel : ViewModel() {
                     )
                     if (response.isSuccessful) {
                         val intercambioCreado = response.body()
-                        val id = intercambioCreado?.id ?: -1 // Usa el campo correcto de la respuesta
+                        val id =
+                            intercambioCreado?.id ?: -1 // Usa el campo correcto de la respuesta
                         if (id > 0) {
                             onSuccess(id)
                             Log.d("API Response", "Intercambio creado: $intercambioCreado")
@@ -111,7 +117,8 @@ class MainViewModel : ViewModel() {
                     if (response.isSuccessful) {
                         messageState.value = response.body()?.message ?: "Sin datos disponibles"
                     } else {
-                        messageState.value = "Error al obtener datos: ${response.code()} ${response.message()}"
+                        messageState.value =
+                            "Error al obtener datos: ${response.code()} ${response.message()}"
                     }
                 } else {
                     messageState.value = "Token no encontrado, por favor inicia sesión nuevamente"
@@ -121,6 +128,7 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
     // Función para agregar un tema
     fun nuevoTema(
         tema: Temas,
@@ -146,6 +154,7 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
     fun fetchIntercambios(
         context: Context,
         onSuccess: (List<Intercambio>) -> Unit,
@@ -158,6 +167,10 @@ class MainViewModel : ViewModel() {
                     val response = apiService.getIntercambios("Bearer $token")
                     if (response.isSuccessful) {
                         val intercambios = response.body() ?: emptyList()
+                        Log.d(
+                            "API Response",
+                            "Intercambios recibidos: $intercambios"
+                        ) // Verificar datos
                         onSuccess(intercambios)
                     } else {
                         onError("Error: ${response.code()} ${response.message()}")
@@ -185,27 +198,13 @@ class MainViewModel : ViewModel() {
                     val response = apiService.getIntercambioDetails("Bearer $token", intercambioId)
                     if (response.isSuccessful) {
                         response.body()?.let { details ->
-                            // Mapea la respuesta para asegurarte de que los participantes son objetos Participante
-                            val participantes = details.participantes.map { participanteData ->
-                                Participante(
-                                    nombre = participanteData.nombre,
-                                    correo = participanteData.correo,
-                                    telefono = participanteData.telefono,
-                                    temaPreferido = participanteData.temaPreferido
-                                )
-                            }
-                            val fixedDetails = DetailsResponse(
-                                intercambio = details.intercambio,
-                                temas = details.temas,
-                                participantes = participantes
-                            )
-                            onSuccess(fixedDetails)
-                        }
+                            onSuccess(details)
+                        } ?: onError("La respuesta del servidor está vacía")
                     } else {
-                        onError("Error: ${response.message()}")
+                        onError("Error: ${response.code()} ${response.message()}")
                     }
                 } else {
-                    onError("Token no encontrado")
+                    onError("Token no encontrado, por favor inicia sesión nuevamente.")
                 }
             } catch (e: Exception) {
                 onError("Error de conexión: ${e.message}")
@@ -214,11 +213,10 @@ class MainViewModel : ViewModel() {
     }
 
 
-
-    fun agregarParticipante(
+    fun addParticipante(
         context: Context,
         intercambioId: Int,
-        participante: Participante, // Cambiado a Participante en lugar de String
+        participante: Participante,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
@@ -226,11 +224,12 @@ class MainViewModel : ViewModel() {
             try {
                 val token = SessionManager(context).getToken()
                 if (token != null) {
-                    val response = apiService.addParticipante("Bearer $token", intercambioId, participante)
+                    val response =
+                        apiService.addParticipante("Bearer $token", intercambioId, participante)
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
-                        onError("Error: ${response.message()}")
+                        onError("Error: ${response.errorBody()?.string() ?: response.message()}")
                     }
                 } else {
                     onError("Token no encontrado")
@@ -240,7 +239,4 @@ class MainViewModel : ViewModel() {
             }
         }
     }
-
-
-
 }

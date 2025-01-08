@@ -107,19 +107,19 @@ const authenticate = (req, res, next) => {
 
 const createIntercambio = async (req, res) => {
     const {
-        nombre,
-        fechaLimiteRegistro,
-        fechaIntercambio,
-        horaIntercambio,
-        lugar,
-        montoMaximo,
+        nombre_intercambio,
+        fecha_limite_registro,
+        fecha_intercambio,
+        hora_intercambio,
+        lugar_intercambio,
+        monto,
         comentarios,
     } = req.body;
 
     console.log('Usuario autenticado:', req.userId);
     console.log('Datos del intercambio:', req.body);
 
-    if (!nombre || !fechaLimiteRegistro || !fechaIntercambio || !horaIntercambio || !lugar || montoMaximo === undefined) {
+    if (!nombre_intercambio || !fecha_limite_registro || !fecha_intercambio || !hora_intercambio || !lugar_intercambio || monto === undefined) {
         console.log('Datos incompletos:', req.body); // Log
         return res.status(400).json({ message: 'Faltan datos obligatorios' });
     }
@@ -133,26 +133,26 @@ const createIntercambio = async (req, res) => {
         const claveUnica = uuidv4().slice(0, 8);
 
         console.log('Datos para crear el intercambio:', {
-            nombre_intercambio: nombre,
+            nombre_intercambio: nombre_intercambio,
             clave_unica: claveUnica,
             id_user: req.userId,
-            fecha_limite_registro: fechaLimiteRegistro,
-            fecha_intercambio: fechaIntercambio,
-            hora_intercambio: horaIntercambio,
-            lugar_intercambio: lugar,
-            monto: montoMaximo,
+            fecha_limite_registro: fecha_limite_registro,
+            fecha_intercambio: fecha_intercambio,
+            hora_intercambio: hora_intercambio,
+            lugar_intercambio: lugar_intercambio,
+            monto: monto,
             comentarios,
         });
 
         const intercambio = await Intercambio.create({
-            nombre_intercambio: nombre,
+            nombre_intercambio: nombre_intercambio,
             clave_unica: claveUnica,
             id_user: req.userId,
-            fecha_limite_registro: fechaLimiteRegistro,
-            fecha_intercambio: fechaIntercambio,
-            hora_intercambio: horaIntercambio,
-            lugar_intercambio: lugar,
-            monto: montoMaximo,
+            fecha_limite_registro: fecha_limite_registro,
+            fecha_intercambio: fecha_intercambio,
+            hora_intercambio: hora_intercambio,
+            lugar_intercambio: lugar_intercambio,
+            monto: monto,
             comentarios,
         });
         
@@ -207,18 +207,18 @@ const getIntercambios = async (req, res) => {
         const intercambios = await Intercambio.findAll({
             attributes: [
                 'id',
-                ['nombre_intercambio', 'nombre'],
-                ['fecha_limite_registro', 'fechaLimiteRegistro'],
-                ['fecha_intercambio', 'fechaIntercambio'],
-                ['hora_intercambio', 'horaIntercambio'],
-                ['lugar_intercambio', 'lugar'],
-                ['monto', 'montoMaximo'],
+                ['nombre_intercambio', 'nombre_intercambio'],
+                ['fecha_limite_registro', 'fecha_limite_registro'],
+                ['fecha_intercambio', 'fecha_intercambio'],
+                ['hora_intercambio', 'hora_intercambio'],
+                ['lugar_intercambio', 'lugar_intercambio'],
+                ['monto', 'monto'],
                 'comentarios',
-                ['clave_unica', 'claveUnica']
+                ['clave_unica', 'clave_unica']
             ],
             where: { id_user: userId }
         });
-
+       // console.log(intercambios)
         res.status(200).json(intercambios);
     } catch (error) {
         console.error('Error al obtener los intercambios:', error);
@@ -238,6 +238,7 @@ const getClave = async(req, res) => {
 
     })
 }
+
 const getIntercambioById = async (req, res) => {
     const { id } = req.params;
 
@@ -248,16 +249,16 @@ const getIntercambioById = async (req, res) => {
     try {
         const intercambio = await Intercambio.findOne({
             where: { id },
+            attributes: [
+                'id', 'nombre_intercambio', 'fecha_limite_registro', 
+                'fecha_intercambio', 'hora_intercambio', 'lugar_intercambio', 
+                'monto', 'comentarios', 'clave_unica'
+            ], 
             include: [
                 {
                     model: Temas,
-                    as: 'temasIntercambio', // Alias correcto
-                    attributes: ['id', 'tema'],
-                },
-                {
-                    model: Participante,
-                    as: 'participantesIntercambio', // Alias correcto
-                    attributes: ['id', 'id_intercambio', 'nombre', 'email', 'telefono', 'confirmado', 'asignado_a'],
+                    as: 'temasIntercambio',
+                    attributes: ['id', 'id_intercambio', 'tema'], 
                 },
             ],
         });
@@ -265,8 +266,9 @@ const getIntercambioById = async (req, res) => {
         if (!intercambio) {
             return res.status(404).json({ message: 'Intercambio no encontrado' });
         }
-
-        res.status(200).json(intercambio);
+        console.log(intercambio)
+        
+        res.status(200).json(intercambio);  
     } catch (error) {
         console.error('Error al obtener el intercambio:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
@@ -274,6 +276,34 @@ const getIntercambioById = async (req, res) => {
 };
 
 
+ const addParticipante = async (req, res) => {
+    try {
+        const { id_intercambio, nombre, email, telefono, confirmado, asignado_a } = req.body;
+
+        // Validar datos requeridos
+        if (!id_intercambio || !nombre || !telefono) {
+            return res.status(400).json({ message: 'Faltan datos obligatorios.' });
+        }
+
+        // Crear el participante
+        const nuevoParticipante = await Participante.create({
+            id_intercambio,
+            nombre,
+            email,
+            telefono,
+            confirmado: confirmado || 0, // Default value
+            asignado_a: asignado_a || null, // Default value
+        });
+
+        return res.status(201).json({
+            message: 'Participante agregado exitosamente',
+            participante: nuevoParticipante,
+        });
+    } catch (error) {
+        console.error('Error al agregar participante:', error.message);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
 
 
-export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios,getIntercambioById};
+export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios,getIntercambioById, addParticipante};

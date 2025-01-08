@@ -61,7 +61,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                     .padding(bottom = 16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.snoppy), // Reemplázalo si no existe
+                    painter = painterResource(id = R.drawable.snoppy),
                     contentDescription = "Welcome Icon",
                     tint = Color(0xFF6200EE),
                     modifier = Modifier.size(24.dp)
@@ -89,8 +89,9 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                 HomeButton("Gestionar Intercambios", R.drawable.ic_manage) {
                     navController.navigate(AppScreens.GestionarIntercambio.route)
                 }
-                HomeButton("Unirme a Intercambio", R.drawable.ic_join) { /* Acción */ }
-
+                HomeButton("Unirme a Intercambio", R.drawable.ic_join) {
+                    // Acción al unirse
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -102,70 +103,44 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            if (isLoading.value) {
-                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-            } else if (errorMessage.value != null) {
-                Text(
-                    text = "Error: ${errorMessage.value}",
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else if (exchanges.value.isEmpty()) {
-                Text(
-                    text = "No se encontraron intercambios recientes.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxHeight(0.4f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .padding(8.dp)
-                ) {
-                    items(exchanges.value) { exchange ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp)
-                                .clickable {
-                                    navController.navigate(AppScreens.GestionarIntercambio.route + "/${exchange.id}")
-                                },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_list),
-                                    contentDescription = "Intercambio Icon",
-                                    tint = Color(0xFF6200EE),
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = exchange.nombre ?: "Sin Nombre",
-                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
-                                    )
-                                    Text(
-                                        text = "Fecha: ${exchange.fechaIntercambio ?: "Sin Fecha"}",
-                                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
-                                    )
-                                }
+            when {
+                isLoading.value -> {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                }
+                errorMessage.value != null -> {
+                    Text(
+                        text = "Error: ${errorMessage.value}",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                exchanges.value.isEmpty() -> {
+                    Text(
+                        text = "No se encontraron intercambios recientes.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxHeight(0.4f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .padding(8.dp)
+                    ) {
+                        items(exchanges.value) { exchange ->
+                            ExchangeCard(exchange) {
+                                navController.navigate("${AppScreens.GestionarIntercambio.route}/${exchange.id}")
+
                             }
                         }
                     }
                 }
             }
 
-                Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
 
             // Logout Button
             Button(
@@ -176,6 +151,43 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 Text("Cerrar Sesión", fontSize = 16.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun ExchangeCard(exchange: Intercambio, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_list),
+                contentDescription = "Intercambio Icon",
+                tint = Color(0xFF6200EE),
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = exchange.nombre_intercambio ?: "Sin Nombre",
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
+                )
+                Text(
+                    text = "Fecha: ${exchange.fecha_intercambio ?: "Sin Fecha"}",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                )
             }
         }
     }
