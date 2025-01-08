@@ -4,8 +4,14 @@ import jwt from 'jsonwebtoken';
 import Intercambio from '../models/Intercambio.js'; // Modelo de Intercambio
 import Participante from '../models/participante.js'; // Modelo de Participante
 import Temas from '../models/tema.js';
-
+import twilio from 'twilio';
+import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid'; // Generar claves únicas (UUID)
+dotenv.config({ path: './twilio.env' });
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID; // Coloca tu SID
+const authToken = process.env.TWILIO_AUTH_TOKEN; // Coloca tu Auth Token
+const client = twilio(accountSid, authToken);
 
 
 const registerUser = async (req, res) => {
@@ -275,8 +281,7 @@ const getIntercambioById = async (req, res) => {
     }
 };
 
-
- const addParticipante = async (req, res) => {
+const addParticipante = async (req, res) => {
     try {
         const { id_intercambio, nombre, email, telefono, confirmado, asignado_a } = req.body;
 
@@ -291,12 +296,38 @@ const getIntercambioById = async (req, res) => {
             nombre,
             email,
             telefono,
-            confirmado: confirmado || 0, // Default value
-            asignado_a: asignado_a || null, // Default value
+            confirmado: confirmado || 0, // Valor predeterminado
+            asignado_a: asignado_a || null, // Valor predeterminado
         });
 
+        // Obtener la clave del intercambio
+        const intercambio = await Intercambio.findOne({
+            where: { id: id_intercambio },
+            attributes: ['clave_unica', 'nombre_intercambio'], // Obtener solo los campos necesarios
+        });
+
+        if (!intercambio) {
+            return res.status(404).json({ message: 'Intercambio no encontrado' });
+        }
+
+        // Enviar SMS al participante con Twilio
+        const messageBody = `Hola ${nombre}, has sido agregado al intercambio: ${intercambio.nombre_intercambio}. 
+        Tu clave de acceso es: ${intercambio.clave_unica}. ¡Gracias por participar!`;
+
+        try {
+            const message = await client.messages.create({
+                body: messageBody,
+                from: process.env.TWILIO_PHONE_NUMBER, // Tu número Twilio configurado en el archivo .env
+                to: telefono, // Número de teléfono del participante
+            });
+
+            console.log(`Mensaje enviado con SID: ${message.sid}`);
+        } catch (error) {
+            console.error('Error al enviar SMS:', error.message);
+        }
+
         return res.status(201).json({
-            message: 'Participante agregado exitosamente',
+            message: 'Participante agregado exitosamente y SMS enviado',
             participante: nuevoParticipante,
         });
     } catch (error) {
@@ -304,6 +335,7 @@ const getIntercambioById = async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
+
 
 
 export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios,getIntercambioById, addParticipante};
