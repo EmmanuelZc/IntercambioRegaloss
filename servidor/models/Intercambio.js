@@ -1,52 +1,52 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import db from '../config/database.js';
 
-const Intercambio = sequelize.define('Intercambio', {
+const Intercambio = db.define('intercambio', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
+        autoIncrement: true
     },
     nombre_intercambio: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false
     },
     clave_unica: {
-        type: DataTypes.STRING(8), // Cambia el tamaño máximo a 8
+        type: DataTypes.STRING(8),
         allowNull: false,
         unique: true
     },
     id_user: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: false
     },
     fecha_limite_registro: {
-        type: DataTypes.STRING, // Si ahora es VARCHAR
-        allowNull: false,
+        type: DataTypes.DATE,
+        allowNull: false
     },
     fecha_intercambio: {
-        type: DataTypes.STRING, // Si ahora es VARCHAR
-        allowNull: false,
+        type: DataTypes.DATE,
+        allowNull: false
     },
     hora_intercambio: {
-        type: DataTypes.STRING, // Si ahora es VARCHAR
-        allowNull: false,
+        type: DataTypes.TIME,
+        allowNull: false
     },
     lugar_intercambio: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false
     },
     monto: {
         type: DataTypes.FLOAT,
-        allowNull: false,
+        allowNull: false
     },
     comentarios: {
         type: DataTypes.TEXT,
-        allowNull: true,
-    },
+        allowNull: true
+    }
 }, {
     timestamps: false,
-    tableName: 'intercambio',
+    tableName: 'intercambio'
 });
 
 export default Intercambio;

@@ -45,14 +45,10 @@ fun AppNavigation(){
             AgregarTemasScreen(navController = navController, intercambioId = id)
         }
 
-        composable(
-            route = AppScreens.GestionarIntercambio.route + "/{intercambioId}",
-            arguments = listOf(navArgument("intercambioId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val intercambioId = backStackEntry.arguments?.getInt("intercambioId") ?: 0
+        composable(AppScreens.GestionarIntercambio.route + "/{intercambioId}") { backStackEntry ->
+            val intercambioId = backStackEntry.arguments?.getString("intercambioId")?.toInt() ?: 0
             GestionarIntercambioScreen(navController, intercambioId)
         }
-
     }
 
 }

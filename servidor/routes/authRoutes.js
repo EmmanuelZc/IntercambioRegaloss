@@ -8,5 +8,7 @@ router.post('/login', authControllers.loginUser);
 router.post('/intercambio',authControllers.authenticate, authControllers.createIntercambio); 
 router.post('/temas', authControllers.authenticate, authControllers.addTema); 
 router.get('/intercambio', authControllers.authenticate, authControllers.getIntercambios)
+router.get('/intercambio/:id', authControllers.authenticate, authControllers.getIntercambioById)
+
 router.get('/clave')
 export default router;

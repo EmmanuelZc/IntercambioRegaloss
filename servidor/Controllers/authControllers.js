@@ -8,17 +8,17 @@ import Temas from '../models/tema.js';
 import { v4 as uuidv4 } from 'uuid'; // Generar claves únicas (UUID)
 
 // Registro de usuario
+// Registro de usuario
 const registerUser = async (req, res) => {
     const { nombre, alias, correo, contraseña } = req.body;
 
-    // Validación de datos
     if (!nombre || !alias || !correo || !contraseña) {
         return res.status(400).json({ message: 'Faltan datos' });
     }
 
     try {
         // Verificar si el correo ya está registrado
-        const existingUser = await User.findOne({ correo });
+        const existingUser = await User.findOne({ where: { correo } }); // Corregido
         if (existingUser) {
             return res.status(400).json({ message: 'El correo ya está registrado' });
         }
@@ -240,4 +240,32 @@ const getClave = async(req, res) => {
     })
 }
 
-export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios};
+
+const getIntercambioById = async (req, res) => {
+    const { id } = req.params; // Obtener el ID de los parámetros de la ruta
+
+    if (!id) {
+        return res.status(400).json({ message: 'Falta el ID del intercambio' });
+    }
+
+    try {
+        const intercambio = await Intercambio.findOne({
+            where: { id },
+            include: [
+                { model: Temas, as: 'temas', attributes: ['id', 'tema'] },
+                { model: Participante, as: 'participantes', attributes: ['id', 'nombre', 'correo'] }
+            ]
+        });
+
+        if (!intercambio) {
+            return res.status(404).json({ message: 'Intercambio no encontrado' });
+        }
+
+        res.status(200).json(intercambio);
+    } catch (error) {
+        console.error('Error al obtener el intercambio:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+export default { registerUser, loginUser, createIntercambio,authenticate, addTema,getIntercambios,getIntercambioById};

@@ -47,7 +47,7 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<Intercambio>>
 
-    @GET("/api/auth/intercambios/{id}")
+    @GET("/api/auth/intercambio/{id}")
     suspend fun getIntercambioDetails(
         @Header("Authorization") token: String,
         @Path("id") intercambioId: Int

@@ -1,6 +1,7 @@
 package com.example.intercambioderegalos
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -89,7 +90,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                     navController.navigate(AppScreens.GestionarIntercambio.route)
                 }
                 HomeButton("Unirme a Intercambio", R.drawable.ic_join) { /* Acción */ }
-              
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -128,7 +129,10 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp),
+                                .padding(vertical = 6.dp)
+                                .clickable {
+                                    navController.navigate(AppScreens.GestionarIntercambio.route + "/${exchange.id}")
+                                },
                             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                             colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
                         ) {
@@ -139,7 +143,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_list), // Reemplázalo si no existe
+                                    painter = painterResource(id = R.drawable.ic_list),
                                     contentDescription = "Intercambio Icon",
                                     tint = Color(0xFF6200EE),
                                     modifier = Modifier.size(32.dp)
@@ -161,7 +165,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel = viewMode
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
 
             // Logout Button
             Button(

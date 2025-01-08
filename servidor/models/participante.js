@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-
+import Intercambio from './Intercambio.js';
 const Participante = sequelize.define('Participante', {
     id: {
         type: DataTypes.INTEGER,
@@ -36,4 +36,9 @@ const Participante = sequelize.define('Participante', {
     timestamps: false,
 });
 
+
+Participante.belongsTo(Intercambio, {
+    foreignKey: 'id_intercambio',
+    as: 'intercambio',
+});
 export default Participante;
